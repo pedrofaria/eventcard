@@ -1,15 +1,15 @@
 
-GET http://localhost:8080/card/100 HTTP/1.1
+GET http://localhost:8080/admin/card/100 HTTP/1.1
 content-type: application/json
 
 ###
 
-GET http://localhost:8080/card/100/balance HTTP/1.1
+GET http://localhost:8080/admin/card/100/balance HTTP/1.1
 content-type: application/json
 
 ###
 
-POST http://localhost:8080/card HTTP/1.1
+POST http://localhost:8080/admin/card HTTP/1.1
 content-type: application/json
 
 {
@@ -20,7 +20,7 @@ content-type: application/json
 
 ###
 
-POST http://localhost:8080/card/100/deposit HTTP/1.1
+POST http://localhost:8080/admin/card/100/deposit HTTP/1.1
 content-type: application/json
 
 {

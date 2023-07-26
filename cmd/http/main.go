@@ -11,10 +11,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type CardIdUri struct {
-	Id uint32 `uri:"id" binding:"required,numeric,min=1,max=9999999999"`
-}
-
 func main() {
 	db, err := sql.Open("postgres", "user=eventcard dbname=eventcard password=eventcard host=db sslmode=disable")
 	if err != nil {
