@@ -1,0 +1,29 @@
+
+GET http://localhost:8080/card/100 HTTP/1.1
+content-type: application/json
+
+###
+
+GET http://localhost:8080/card/100/balance HTTP/1.1
+content-type: application/json
+
+###
+
+POST http://localhost:8080/card HTTP/1.1
+content-type: application/json
+
+{
+    "external_id": 100,
+    "name": "Pedro Faria",
+    "enabled": true
+}
+
+###
+
+POST http://localhost:8080/card/100/deposit HTTP/1.1
+content-type: application/json
+
+{
+    "amount": 5.70,
+    "paid": true
+}

@@ -1,0 +1,13 @@
+version: "2"
+
+sql:
+  - engine: "postgresql"
+    queries: "internal/repository/cards/queries.sql"
+    schema: "migrations/init.sql"
+    gen:
+      go:
+        package: "cards"
+        out: "internal/repository/cards"
+        omit_unused_structs: true
+        emit_interface: true
+        emit_prepared_queries: true
