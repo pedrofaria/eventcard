@@ -27,17 +27,6 @@ sql:
         emit_methods_with_db_argument: false
         emit_result_struct_pointers: true
   - engine: "postgresql"
-    queries: "internal/repository/deposit/queries.sql"
-    schema: "migrations/init.sql"
-    gen:
-      go:
-        package: "deposit"
-        out: "internal/repository/deposit"
-        omit_unused_structs: true
-        emit_interface: false
-        emit_prepared_queries: false
-        query_parameter_limit: 4
-  - engine: "postgresql"
     queries: "internal/bundles/deposit/repository/queries.sql"
     schema: "migrations/init.sql"
     gen:
