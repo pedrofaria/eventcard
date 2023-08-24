@@ -1,4 +1,4 @@
-package http
+package admin
 
 import (
 	"log"
@@ -24,7 +24,7 @@ func Register(r *gin.Engine, srv *deposit.Service) {
 	}
 }
 
-type newDepositData struct {
+type NewDepositData struct {
 	Amount float32 `json:"amount" binding:"required,gte=0.011,max=99999999.99"`
 	Paid   bool    `json:"paid"`
 }
@@ -38,7 +38,7 @@ func (h *handler) CreateCardDeposit(c *gin.Context) {
 		return
 	}
 
-	var payload newDepositData
+	var payload NewDepositData
 
 	if err := c.Bind(&payload); err != nil {
 		log.Printf("Error: %v", err)
