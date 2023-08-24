@@ -6,25 +6,23 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/pedrofaria/eventcard/internal/repository/cards"
+	"github.com/pedrofaria/eventcard/internal/repository/card"
+	"github.com/pedrofaria/eventcard/internal/repository/ledger"
 )
 
 type Cards struct {
-	cards.Queries
-
+	*card.Queries
 	db *sql.DB
 }
 
 func NewCards(db *sql.DB) *Cards {
-	cQ := cards.New(db)
-
 	return &Cards{
-		Queries: *cQ,
+		Queries: card.New(db),
 		db:      db,
 	}
 }
 
-func (c *Cards) RunAtomic(ctx context.Context, fn func(repo *cards.Queries) error) error {
+func (c *Cards) RunAtomic(ctx context.Context, fn func(repo *card.Queries) error) error {
 	tx, _ := c.db.BeginTx(ctx, nil)
 
 	if err := fn(c.WithTx(tx)); err != nil {
@@ -35,22 +33,13 @@ func (c *Cards) RunAtomic(ctx context.Context, fn func(repo *cards.Queries) erro
 	return tx.Commit()
 }
 
-func (c *Cards) GetCardFullFromExternalId(ctx context.Context, externalId int32) (*cards.GetCardFullByExternalIdRow, error) {
-	card, err := c.GetCardFullByExternalId(ctx, externalId)
-	if err != nil {
-		return nil, err
-	}
-
-	return &card, err
-}
-
-func (c *Cards) CreateCard(ctx context.Context, externalId int32, name string, enabled bool) (*cards.GetCardFullRow, error) {
+func (c *Cards) CreateCard(ctx context.Context, externalId int32, name string, enabled bool) (*card.GetCardFullRow, error) {
 	cardId := uuid.New()
 	now := time.Now().UTC()
 	balance := "0.00"
 
-	err := c.RunAtomic(ctx, func(repo *cards.Queries) error {
-		cardParam := cards.CreateCardParams{
+	err := c.RunAtomic(ctx, func(repo *card.Queries) error {
+		cardParam := card.CreateCardParams{
 			ID:         cardId,
 			ExternalID: externalId,
 			Name:       name,
@@ -63,7 +52,7 @@ func (c *Cards) CreateCard(ctx context.Context, externalId int32, name string, e
 			return err
 		}
 
-		balanceParam := cards.CreateBalanceParams{
+		balanceParam := card.CreateBalanceParams{
 			ID:        uuid.New(),
 			CardID:    cardId,
 			Amount:    balance,
@@ -77,7 +66,7 @@ func (c *Cards) CreateCard(ctx context.Context, externalId int32, name string, e
 		return nil, err
 	}
 
-	return &cards.GetCardFullRow{
+	return &card.GetCardFullRow{
 		ID:         cardId,
 		ExternalID: externalId,
 		Name:       name,
@@ -88,25 +77,20 @@ func (c *Cards) CreateCard(ctx context.Context, externalId int32, name string, e
 	}, nil
 }
 
-func (c *Cards) UpdateEnableCard(ctx context.Context, externalId int32, enabled bool) error {
-	return c.UpdateEnabledCardByExternalId(
-		ctx,
-		cards.UpdateEnabledCardByExternalIdParams{ExternalID: externalId, Enabled: enabled})
-}
-
 func registerLedger(
 	ctx context.Context,
-	repo *cards.Queries,
+	dbtx ledger.DBTX,
+	repo *ledger.Queries,
 	cardId uuid.UUID,
-	reference cards.Reference,
+	reference ledger.Reference,
 	referenceId uuid.UUID,
 	amount string,
 	createdAt time.Time,
 ) error {
-	if err := repo.CreateLedger(ctx, cards.CreateLedgerParams{
+	if err := repo.CreateLedger(ctx, dbtx, ledger.CreateLedgerParams{
 		ID:          uuid.New(),
 		CardID:      cardId,
-		Reference:   cards.ReferenceDeposit,
+		Reference:   ledger.ReferenceDeposit,
 		ReferenceID: referenceId,
 		Amount:      amount,
 		CreatedAt:   createdAt,
@@ -114,8 +98,5 @@ func registerLedger(
 		return err
 	}
 
-	return repo.IncreaseCardBalance(ctx, cards.IncreaseCardBalanceParams{
-		Amount: amount,
-		CardID: cardId,
-	})
+	return repo.IncreaseCardBalance(ctx, dbtx, amount, cardId)
 }

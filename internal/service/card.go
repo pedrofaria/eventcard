@@ -25,7 +25,7 @@ func NewCard(repo *repository.Cards) *Card {
 }
 
 func (c *Card) GetCardFull(ctx context.Context, externalId int32) (*model.Card, error) {
-	repoCard, err := c.repo.GetCardFullFromExternalId(ctx, externalId)
+	repoCard, err := c.repo.GetCardFullByExternalId(ctx, externalId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrCardNotFound
@@ -72,34 +72,6 @@ func (c *Card) CreateCard(ctx context.Context, externalId uint32, name string, e
 	}
 
 	model := repository.GetCardFullRowToModel(repoCard)
-
-	return &model, nil
-}
-
-func (c *Card) CreateDeposit(ctx context.Context, externalId uint32, amount float32, paid bool) (*model.Deposit, error) {
-	if amount < 0 {
-		return nil, ErrAmountMustBePositive
-	}
-
-	card, err := c.repo.GetCardByExternalId(ctx, int32(externalId))
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrCardNotFound
-		}
-
-		return nil, err
-	}
-
-	if !card.Enabled {
-		return nil, ErrCardDisabled
-	}
-
-	repoDeposit, err := c.repo.CreateDeposit(ctx, card.ID, amount, paid)
-	if err != nil {
-		return nil, err
-	}
-
-	model := repository.DepositToModel(repoDeposit)
 
 	return &model, nil
 }

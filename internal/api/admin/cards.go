@@ -22,19 +22,16 @@ type CardsHandler struct {
 	cardService *service.Card
 }
 
-func NewCardsHandler(cardService *service.Card) *CardsHandler {
-	return &CardsHandler{
+func Register(r *gin.Engine, cardService *service.Card) {
+	h := &CardsHandler{
 		cardService: cardService,
 	}
-}
 
-func Register(r *gin.Engine, c *CardsHandler) {
 	grp := r.Group("/admin")
 	{
-		grp.POST("/card", c.CreateCard)
-		grp.GET("/card/:id", c.GetCard)
-		grp.GET("/card/:id/balance", c.GetCardBalance)
-		r.POST("/card/:id/deposit", c.CreateCardDeposit)
+		grp.POST("/card", h.CreateCard)
+		grp.GET("/card/:id", h.GetCard)
+		grp.GET("/card/:id/balance", h.GetCardBalance)
 	}
 }
 

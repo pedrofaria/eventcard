@@ -2,14 +2,11 @@
 // versions:
 //   sqlc v1.19.1
 
-package cards
+package ledger
 
 import (
 	"database/sql/driver"
 	"fmt"
-	"time"
-
-	"github.com/google/uuid"
 )
 
 type Reference string
@@ -53,24 +50,4 @@ func (ns NullReference) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.Reference), nil
-}
-
-type Card struct {
-	ID         uuid.UUID
-	ExternalID int32
-	Name       string
-	Enabled    bool
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-}
-
-type Deposit struct {
-	ID         uuid.UUID
-	ExternalID uuid.UUID
-	CardID     uuid.UUID
-	Amount     string
-	Paid       bool
-	Cancelled  bool
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
 }
