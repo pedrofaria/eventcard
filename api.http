@@ -20,10 +20,25 @@ content-type: application/json
 
 ###
 
+GET http://localhost:8080/admin/card/100/deposit HTTP/1.1
+content-type: application/json
+
+###
+
 POST http://localhost:8080/admin/card/100/deposit HTTP/1.1
 content-type: application/json
 
 {
     "amount": 3.00,
-    "paid": true
+    "paid": false
 }
+
+###
+
+POST http://localhost:8080/admin/card/100/deposit/5acd24ea-471e-4b0b-a961-c486d22b7098/pay HTTP/1.1
+content-type: application/json
+
+###
+
+POST http://localhost:8080/admin/card/100/deposit/5acd24ea-471e-4b0b-a961-c486d22b7098/cancel HTTP/1.1
+content-type: application/json

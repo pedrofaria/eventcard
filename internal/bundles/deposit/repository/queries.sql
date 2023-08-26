@@ -12,25 +12,28 @@ INSERT INTO
     )
 VALUES ($1, $2, $3, $4, $5, $6, $7);
 
--- name: GetDepositsByExternalCardId :many
+-- name: GetDepositsByCardId :many
 
-SELECT d.*
-FROM cards c
-    INNER JOIN deposits d ON d.card_id = c.id
-WHERE c.external_id = $1;
+SELECT * FROM deposits WHERE card_id = $1 ORDER BY created_at DESC;
 
--- name: GetDepositByExternalId :one
+-- name: GetDepositByCardAndExternalId :one
 
-SELECT * FROM deposits WHERE external_id = $1;
+SELECT * FROM deposits WHERE card_id = $1 AND external_id = $2;
 
--- name: UpdatePaidActiveDepositById :exec
+-- name: UpdatePaidActiveDepositById :one
 
-UPDATE deposits SET paid = $2 WHERE id = $1 AND cancelled = false;
+UPDATE deposits
+SET paid = $2, updated_at = NOW()
+WHERE
+    id = $1
+    AND cancelled = false RETURNING *;
 
 -- name: CancelDepositById :one
 
 UPDATE deposits
-SET cancelled = true
+SET
+    cancelled = true,
+    updated_at = NOW()
 WHERE
     id = $1
     AND cancelled = false RETURNING *;

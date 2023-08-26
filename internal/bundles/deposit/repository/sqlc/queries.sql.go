@@ -15,13 +15,15 @@ import (
 const cancelDepositById = `-- name: CancelDepositById :one
 
 UPDATE deposits
-SET cancelled = true
+SET
+    cancelled = true,
+    updated_at = NOW()
 WHERE
     id = $1
     AND cancelled = false RETURNING id, external_id, card_id, amount, paid, cancelled, created_at, updated_at
 `
 
-func (q *Queries) CancelDepositById(ctx context.Context, id uuid.UUID) (Deposit, error) {
+func (q *Queries) CancelDepositById(ctx context.Context, id uuid.UUID) (*Deposit, error) {
 	row := q.db.QueryRowContext(ctx, cancelDepositById, id)
 	var i Deposit
 	err := row.Scan(
@@ -34,7 +36,7 @@ func (q *Queries) CancelDepositById(ctx context.Context, id uuid.UUID) (Deposit,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
-	return i, err
+	return &i, err
 }
 
 const createDeposit = `-- name: CreateDeposit :exec
@@ -75,13 +77,13 @@ func (q *Queries) CreateDeposit(ctx context.Context, arg CreateDepositParams) er
 	return err
 }
 
-const getDepositByExternalId = `-- name: GetDepositByExternalId :one
+const getDepositByCardAndExternalId = `-- name: GetDepositByCardAndExternalId :one
 
-SELECT id, external_id, card_id, amount, paid, cancelled, created_at, updated_at FROM deposits WHERE external_id = $1
+SELECT id, external_id, card_id, amount, paid, cancelled, created_at, updated_at FROM deposits WHERE card_id = $1 AND external_id = $2
 `
 
-func (q *Queries) GetDepositByExternalId(ctx context.Context, externalID uuid.UUID) (Deposit, error) {
-	row := q.db.QueryRowContext(ctx, getDepositByExternalId, externalID)
+func (q *Queries) GetDepositByCardAndExternalId(ctx context.Context, cardID uuid.UUID, externalID uuid.UUID) (*Deposit, error) {
+	row := q.db.QueryRowContext(ctx, getDepositByCardAndExternalId, cardID, externalID)
 	var i Deposit
 	err := row.Scan(
 		&i.ID,
@@ -93,24 +95,21 @@ func (q *Queries) GetDepositByExternalId(ctx context.Context, externalID uuid.UU
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
-	return i, err
+	return &i, err
 }
 
-const getDepositsByExternalCardId = `-- name: GetDepositsByExternalCardId :many
+const getDepositsByCardId = `-- name: GetDepositsByCardId :many
 
-SELECT d.id, d.external_id, d.card_id, d.amount, d.paid, d.cancelled, d.created_at, d.updated_at
-FROM cards c
-    INNER JOIN deposits d ON d.card_id = c.id
-WHERE c.external_id = $1
+SELECT id, external_id, card_id, amount, paid, cancelled, created_at, updated_at FROM deposits WHERE card_id = $1 ORDER BY created_at DESC
 `
 
-func (q *Queries) GetDepositsByExternalCardId(ctx context.Context, externalID int32) ([]Deposit, error) {
-	rows, err := q.db.QueryContext(ctx, getDepositsByExternalCardId, externalID)
+func (q *Queries) GetDepositsByCardId(ctx context.Context, cardID uuid.UUID) ([]*Deposit, error) {
+	rows, err := q.db.QueryContext(ctx, getDepositsByCardId, cardID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Deposit
+	var items []*Deposit
 	for rows.Next() {
 		var i Deposit
 		if err := rows.Scan(
@@ -125,7 +124,7 @@ func (q *Queries) GetDepositsByExternalCardId(ctx context.Context, externalID in
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, &i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -136,12 +135,27 @@ func (q *Queries) GetDepositsByExternalCardId(ctx context.Context, externalID in
 	return items, nil
 }
 
-const updatePaidActiveDepositById = `-- name: UpdatePaidActiveDepositById :exec
+const updatePaidActiveDepositById = `-- name: UpdatePaidActiveDepositById :one
 
-UPDATE deposits SET paid = $2 WHERE id = $1 AND cancelled = false
+UPDATE deposits
+SET paid = $2, updated_at = NOW()
+WHERE
+    id = $1
+    AND cancelled = false RETURNING id, external_id, card_id, amount, paid, cancelled, created_at, updated_at
 `
 
-func (q *Queries) UpdatePaidActiveDepositById(ctx context.Context, iD uuid.UUID, paid bool) error {
-	_, err := q.db.ExecContext(ctx, updatePaidActiveDepositById, iD, paid)
-	return err
+func (q *Queries) UpdatePaidActiveDepositById(ctx context.Context, iD uuid.UUID, paid bool) (*Deposit, error) {
+	row := q.db.QueryRowContext(ctx, updatePaidActiveDepositById, iD, paid)
+	var i Deposit
+	err := row.Scan(
+		&i.ID,
+		&i.ExternalID,
+		&i.CardID,
+		&i.Amount,
+		&i.Paid,
+		&i.Cancelled,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
 }

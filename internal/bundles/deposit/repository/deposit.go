@@ -39,6 +39,14 @@ func (c *Deposit) RunAtomic(ctx context.Context, fn func(ledger.DBTX, *sqlc.Quer
 	return tx.Commit()
 }
 
+func (c *Deposit) GetListByCardId(ctx context.Context, cardId uuid.UUID) ([]*sqlc.Deposit, error) {
+	return c.deposit.GetDepositsByCardId(ctx, cardId)
+}
+
+func (c *Deposit) GetByCardAndExternalId(ctx context.Context, cardId, externalId uuid.UUID) (*sqlc.Deposit, error) {
+	return c.deposit.GetDepositByCardAndExternalId(ctx, cardId, externalId)
+}
+
 func (c *Deposit) CreateDeposit(ctx context.Context, cardId uuid.UUID, amount float32, paid bool) (*sqlc.Deposit, error) {
 	id := uuid.New()
 	externalId := uuid.New()
@@ -89,14 +97,20 @@ func (c *Deposit) CancelDeposit(ctx context.Context, id uuid.UUID) error {
 	})
 }
 
-func DepositToModel(dep *sqlc.Deposit) model.Deposit {
+func (c *Deposit) UpdatePaid(ctx context.Context, id uuid.UUID, status bool) (*sqlc.Deposit, error) {
+	return c.deposit.UpdatePaidActiveDepositById(ctx, id, status)
+}
+
+func DepositToModel(dep *sqlc.Deposit, externalCardId uint32) model.Deposit {
 	return model.Deposit{
-		Id:         dep.ID,
-		ExternalId: dep.ExternalID,
-		CardId:     dep.CardID,
-		Amount:     utils.NumericToFloat32(dep.Amount),
-		Paid:       dep.Paid,
-		CreatedAt:  dep.CreatedAt,
-		UpdatedAt:  dep.UpdatedAt,
+		Id:             dep.ID,
+		ExternalId:     dep.ExternalID,
+		CardId:         dep.CardID,
+		ExternalCardId: externalCardId,
+		Amount:         utils.NumericToFloat32(dep.Amount),
+		Paid:           dep.Paid,
+		Cancelled:      dep.Cancelled,
+		CreatedAt:      dep.CreatedAt,
+		UpdatedAt:      dep.UpdatedAt,
 	}
 }

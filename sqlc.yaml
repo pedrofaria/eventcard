@@ -37,3 +37,4 @@ sql:
         emit_interface: false
         emit_prepared_queries: false
         query_parameter_limit: 4
+        emit_result_struct_pointers: true

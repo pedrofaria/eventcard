@@ -7,11 +7,13 @@ import (
 )
 
 type Deposit struct {
-	Id         uuid.UUID
-	ExternalId uuid.UUID
-	CardId     uuid.UUID
-	Amount     float32
-	Paid       bool
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	Id             uuid.UUID
+	ExternalId     uuid.UUID
+	CardId         uuid.UUID
+	ExternalCardId uint32
+	Amount         float32
+	Paid           bool
+	Cancelled      bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
